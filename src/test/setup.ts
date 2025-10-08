@@ -1,27 +1,23 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import { app } from '../app';
-import request from 'supertest';
+import jsonwebtoken from 'jsonwebtoken';
 
 let mongo: MongoMemoryServer;
 
 declare global {
-  var signin: () => Promise<string[]>;
+  var signin: () => { cookie: string[]; id: string };
 }
 
-global.signin = async () => {
-  const signupResponse = await request(app)
-    .post('/api/users/signup')
-    .send({
-      email: 'test@test.com',
-      password: 'password',
-    })
-    .expect(201);
-  const cookie = signupResponse.get('Set-Cookie');
-  if (!cookie) {
-    throw new Error('Cookie not found');
-  }
-  return cookie;
+global.signin = () => {
+  const payload = {
+    id: new mongoose.Types.ObjectId().toHexString(),
+    email: 'test@test.com',
+  };
+  const token = jsonwebtoken.sign(payload, process.env.JWT_KEY!);
+  const session = { jwt: token };
+  const sessionJSON = JSON.stringify(session);
+  const base64 = Buffer.from(sessionJSON).toString('base64');
+  return { cookie: [`session=${base64}`], id: payload.id };
 };
 
 beforeAll(async () => {
