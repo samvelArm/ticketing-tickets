@@ -2,6 +2,8 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import jsonwebtoken from 'jsonwebtoken';
 
+jest.mock('../nats-wrapper');
+
 let mongo: MongoMemoryServer;
 
 declare global {
